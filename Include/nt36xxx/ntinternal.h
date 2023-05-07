@@ -42,6 +42,44 @@
 #pragma warning (disable : 4324)
 
 
+#define TOUCH_MAX_FINGER_NUM 10
+#define I2C_FW_Address 0x01
+#define I2C_HW_Address 0x62
+
+struct nt36xxx_abs_object
+{
+	unsigned short x;
+	unsigned short y;
+	unsigned short z;
+	unsigned char tm;
+};
+enum nt36xxx_cmds
+{
+	NT36XXX_CMD_ENTER_SLEEP = 0x11,
+	NT36XXX_CMD_ENTER_WKUP_GESTURE = 0x13,
+	NT36XXX_CMD_UNLOCK = 0x35,
+	NT36XXX_CMD_BOOTLOADER_RESET = 0x69,
+	NT36XXX_CMD_SW_RESET = 0xA5,
+	NT36XXX_CMD_SET_PAGE = 0xFF,
+};
+enum nt36xxx_i2c_events
+{
+	NT36XXX_EVT_I2C_COMMAND = 0x00, // Custom
+	NT36XXX_EVT_CHIPID = 0x4E,
+	NT36XXX_EVT_HOST_CMD = 0x50,
+	NT36XXX_EVT_HS_OR_SUBCMD = 0x51,   /* Handshake or subcommand byte */
+	NT36XXX_EVT_RESET_COMPLETE = 0x60,
+	NT36XXX_EVT_FWINFO = 0x78,
+	NT36XXX_EVT_PROJECTID = 0x9A,
+};
+
+
+#define WriteI2C_FW(__ctx, __buf, __buflen) \
+		SpbWriteDataSynchronously(__ctx, I2C_FW_Address, __buf, __buflen)
+#define WriteI2C_HW(__ctx, __buf, __buflen) \
+		SpbWriteDataSynchronously(__ctx, I2C_HW_Address, __buf, __buflen)
+
+
 typedef enum _FOCAL_TECH_GESTURE_ID
 {
       FOCAL_TECH_GESTURE_NONE = 0x00,

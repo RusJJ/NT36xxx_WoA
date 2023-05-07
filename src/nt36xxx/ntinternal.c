@@ -62,15 +62,6 @@ Ft5xConfigureFunctions(
       return STATUS_SUCCESS;
 }
 
-struct nt36xxx_abs_object {
-    unsigned short x;
-    unsigned short y;
-    unsigned short z;
-    unsigned char tm;
-};
-
-#define TOUCH_MAX_FINGER_NUM 10
-
 NTSTATUS
 Ft5xGetObjectStatusFromControllerF12(
       IN VOID* ControllerContext,
