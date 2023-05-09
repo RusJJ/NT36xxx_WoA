@@ -42,9 +42,17 @@
 #pragma warning (disable : 4324)
 
 
-#define TOUCH_MAX_FINGER_NUM 10
-#define I2C_FW_Address 0x01
-#define I2C_HW_Address 0x62
+#define I2C_BLDR_Address		0x01
+#define I2C_FW_Address			0x01
+#define I2C_HW_Address			0x62
+
+#define I2C_HW_Address_Real     (I2C_HW_Address-0x01)
+
+#define NT36XXX_PAGE_CHIP_INFO	0x0001F64E
+#define NT36XXX_PAGE_CRC		0x0003F135
+
+#define POINT_DATA_LEN			65
+#define TOUCH_MAX_FINGER_NUM	10
 
 struct nt36xxx_abs_object
 {
@@ -52,6 +60,14 @@ struct nt36xxx_abs_object
 	unsigned short y;
 	unsigned short z;
 	unsigned char tm;
+};
+enum nt36xxx_chips {
+	NT36525_IC = 0,
+	NT36672A_IC,
+	NT36676F_IC,
+	NT36772_IC,
+	NT36870_IC,
+	NTMAX_IC,
 };
 enum nt36xxx_cmds
 {
@@ -65,6 +81,7 @@ enum nt36xxx_cmds
 enum nt36xxx_i2c_events
 {
 	NT36XXX_EVT_I2C_COMMAND = 0x00, // Custom
+	NT36XXX_EVT_CRC = 0x35,
 	NT36XXX_EVT_CHIPID = 0x4E,
 	NT36XXX_EVT_HOST_CMD = 0x50,
 	NT36XXX_EVT_HS_OR_SUBCMD = 0x51,   /* Handshake or subcommand byte */
@@ -73,12 +90,46 @@ enum nt36xxx_i2c_events
 	NT36XXX_EVT_PROJECTID = 0x9A,
 };
 
+enum nt36xxx_fw_state
+{
+	NT36XXX_STATE_INIT = 0xA0,	/* IC reset */
+	NT36XXX_STATE_REK,			/* ReK baseline */
+	NT36XXX_STATE_REK_FINISH,	/* Baseline is ready */
+	NT36XXX_STATE_NORMAL_RUN,	/* Normal run */
+	NT36XXX_STATE_MAX = 0xAF
+};
+
+enum nt36672a_map_addr
+{
+	NT36672A_EVENT_BUF_ADDR = 0x21C00,
+	NT36672A_RAW_PIPE0_ADDR = 0x20000,
+	NT36672A_RAW_PIPE1_ADDR = 0x23000,
+	NT36672A_BASELINE_ADDR = 0x20BFC,
+	NT36672A_BASELINE_BTN_ADDR = 0x23BFC,
+	NT36672A_DIFF_PIPE0_ADDR = 0x206DC,
+	NT36672A_DIFF_PIPE1_ADDR = 0x236DC,
+	NT36672A_RAW_BTN_PIPE0_ADDR = 0x20510,
+	NT36672A_RAW_BTN_PIPE1_ADDR = 0x23510,
+	NT36672A_DIFF_BTN_PIPE0_ADDR = 0x20BF0,
+	NT36672A_DIFF_BTN_PIPE1_ADDR = 0x23BF0,
+	NT36672A_READ_FLASH_CHECKSUM_ADDR = 0x24000,
+	NT36672A_RW_FLASH_DATA_ADDR = 0x24002,
+};
+
 
 #define WriteI2C_FW(__ctx, __buf, __buflen) \
-		SpbWriteDataSynchronously(__ctx, I2C_FW_Address, __buf, __buflen)
+		SpbWriteDataSynchronously(__ctx, 0, __buf, __buflen)
 #define WriteI2C_HW(__ctx, __buf, __buflen) \
-		SpbWriteDataSynchronously(__ctx, I2C_HW_Address, __buf, __buflen)
-
+		SpbWriteDataSynchronously(__ctx, I2C_HW_Address_Real, __buf, __buflen)
+#define ReadI2C_FW(__ctx, __buf, __buflen) \
+		SpbReadDataSynchronously(__ctx, 0, __buf, __buflen)
+#define ReadI2C_HW(__ctx, __buf, __buflen) \
+		SpbReadDataSynchronously(__ctx, I2C_HW_Address_Real, __buf, __buflen)
+		
+#define NT_CONFIRM_SUCC(__cmd) \
+	if(__cmd) { Trace(TRACE_LEVEL_ERROR, TRACE_INTERRUPT, "Not successfully called: " #__cmd "\n\nMore info at:", ""); }
+#define NT_CONFIRM_SUCCRET(__cmd) \
+	ret = __cmd; if(ret) { Trace(TRACE_LEVEL_ERROR, TRACE_INTERRUPT, "Not successfully called: " #__cmd "\n\nMore info at:", ""); return ret; }
 
 typedef enum _FOCAL_TECH_GESTURE_ID
 {

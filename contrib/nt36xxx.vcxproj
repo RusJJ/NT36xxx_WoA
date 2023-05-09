@@ -321,6 +321,8 @@
       <WppEnabled>true</WppEnabled>
       <WppRecorderEnabled>true</WppRecorderEnabled>
       <WppScanConfigurationData>$(SolutionDir)..\include\trace.h</WppScanConfigurationData>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Midl>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);DRIVER;_WIN32_WINNT=0x602;_WINNT_;_SAMPLE_DESCRIPTOR_</PreprocessorDefinitions>
@@ -416,6 +418,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\Cross Platform Shim\bitops.c" />
     <ClCompile Include="..\src\Cross Platform Shim\hweight.c" />
+    <ClCompile Include="..\src\nt36xxx\ntspecific.c" />
     <ClCompile Include="..\src\report.c" />
     <ClCompile Include="..\src\touch_power\touch_power.c" />
     <ClCompile Include="..\src\selftest\selftest.c" />
@@ -439,6 +442,7 @@
     <ClInclude Include="..\include\Cross Platform Shim\bitops.h" />
     <ClInclude Include="..\include\Cross Platform Shim\compat.h" />
     <ClInclude Include="..\include\Cross Platform Shim\hweight.h" />
+    <ClInclude Include="..\Include\nt36xxx\ntspecific.h" />
     <ClInclude Include="..\include\report.h" />
     <ClInclude Include="..\include\touch_power\public.h" />
     <ClInclude Include="..\include\touch_power\touch_power.h" />

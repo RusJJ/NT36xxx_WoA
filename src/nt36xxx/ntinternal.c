@@ -22,6 +22,7 @@
 #include <spb.h>
 #include <report.h>
 #include <nt36xxx\ntinternal.h>
+#include <nt36xxx\ntspecific.h>
 #include <ntinternal.tmh>
 
 NTSTATUS
@@ -98,17 +99,12 @@ Return Value:
     //enable TchTranslateToDisplayCoordinates in report.c
 
     unsigned char input_id = 0;
-    unsigned char point[65] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                  0 };
+    unsigned char point[POINT_DATA_LEN] = { 0 }; // Part 1: not doing +1 because ReadI2C reads the register mem starting from 0x02 (but FW is at 0x01 !!! )
     unsigned int ppos = 0;
-    int i, finger_cnt = 0;
 
     int max_x = 1080, max_y = 2246;
 
-    status = SpbReadDataSynchronously(SpbContext, 0, point, sizeof(point));
+    status = ReadI2C_FW(SpbContext, point, sizeof(point));
 
     if (!NT_SUCCESS(status))
     {
@@ -121,34 +117,30 @@ Return Value:
         goto exit;
     }
 
-    for (i = 0; i < TOUCH_MAX_FINGER_NUM; i++) {
-        ppos = 6 * i;
-        input_id = point[ppos + 0] >> 3;
-        if ((input_id == 0) || (input_id > TOUCH_MAX_FINGER_NUM))
-            continue;
+    if (!bTouchIsAwake)
+    {
+        input_id = point[0] >> 3;
 
-        if (((point[ppos] & 0x07) == 0x01) ||
-            ((point[ppos] & 0x07) == 0x02)) {
-            obj->x = (point[ppos + 1] << 4) +
-                (point[ppos + 3] >> 4);
-            obj->y = (point[ppos + 2] << 4) +
-                (point[ppos + 3] & 0xf);
-            if ((obj->x > max_x) ||
-                (obj->y > max_y))
-                continue;
+        status = STATUS_SUCCESS;
+        goto exit;
+    }
+
+    for (unsigned char i = 0; i < TOUCH_MAX_FINGER_NUM; i++)
+    {
+        ppos = 6 * i; // Part 2: not doing +1 because of ReadI2C reading from 0x02
+        input_id = point[ppos + 0] >> 3;
+        if ((input_id == 0) || (input_id > TOUCH_MAX_FINGER_NUM)) continue;
+
+        if (((point[ppos] & 0x07) == 0x01) || ((point[ppos] & 0x07) == 0x02))
+        {
+            obj->x = (point[ppos + 1] << 4) + (point[ppos + 3] >> 4);
+            obj->y = (point[ppos + 2] << 4) + (point[ppos + 3] & 0xF);
+            if ((obj->x > max_x) || (obj->y > max_y)) continue;
 
             obj->tm = point[ppos + 4];
-            if (obj->tm == 0)
-                obj->tm = 1;
+            if (obj->tm == 0) obj->tm = 1;
 
             obj->z = point[ppos + 5];
-            // if (i < 2) {
-            // 	obj->z += point[i + 63] << 8;
-            // 	if (obj->z > TOUCH_MAX_PRESSURE)
-            // 		obj->z = TOUCH_MAX_PRESSURE;
-            // }
-
-            finger_cnt++;
 
             Data->States[i] = OBJECT_STATE_FINGER_PRESENT_WITH_ACCURATE_POS;
 
@@ -160,7 +152,6 @@ Return Value:
 
             Data->Positions[i].X = obj->x;
             Data->Positions[i].Y = obj->y;
-            //printf("x:%d y:%d point:%d\n", (int)obj->x, (int)obj->y, finger_cnt);
         }
     }
 
@@ -274,6 +265,19 @@ Ft5xChangeSleepState(
       UNREFERENCED_PARAMETER(SpbContext);
       UNREFERENCED_PARAMETER(ControllerContext);
       UNREFERENCED_PARAMETER(SleepState);
+
+      switch (SleepState)
+      {
+      case FT5X_F01_DEVICE_CONTROL_SLEEP_MODE_SLEEPING:
+          NVT_Suspend(SpbContext);
+          return NVT_SetGPIOReset(ControllerContext, 1);
+          //return STATUS_SUCCESS;
+
+      case FT5X_F01_DEVICE_CONTROL_SLEEP_MODE_OPERATING:
+          NVT_SetGPIOReset(ControllerContext, 0);
+          return NVT_BootloaderReset(SpbContext);
+          //return NVT_Resume(SpbContext);
+      }
 
       return STATUS_SUCCESS;
 }

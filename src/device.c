@@ -29,12 +29,13 @@
 #include <gpio.h>
 #include <device.h>
 #include <nt36xxx/ntinternal.h>
+#include <nt36xxx/ntspecific.h>
 #include <report.h>
 #include <touch_power/touch_power.h>
 #include <device.tmh>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, OnD0Exit)
+    #pragma alloc_text(PAGE, OnD0Exit)
 #endif
 
 BOOLEAN
@@ -419,6 +420,9 @@ OnPrepareHardware(
 
         goto exit;
     }
+
+    // TODO: NVT custom
+    NVT_InitChip(&devContext->I2CContext);
 
     //
     // Initialize Touch Power so the driver can issue power state changes

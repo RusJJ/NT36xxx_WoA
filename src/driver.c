@@ -30,9 +30,11 @@
 #include <driver.h>
 #include <driver.tmh>
 
+#include <nt36xxx/ntspecific.h>
+
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, OnDeviceAdd)
-#pragma alloc_text(PAGE, OnContextCleanup)
+    #pragma alloc_text(PAGE, OnDeviceAdd)
+    #pragma alloc_text(PAGE, OnContextCleanup)
 #endif
 
 NTSTATUS
